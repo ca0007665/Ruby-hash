@@ -168,6 +168,13 @@ ul {
     max-height: 500px;
 }
 
+/* 小游戏 */
+.games {
+    text-align: center;
+    background: var(--gray-50);
+    color: var(--gray-600);
+}
+
 /* 页脚 */
 .footer {
     background: var(--gray-900);
