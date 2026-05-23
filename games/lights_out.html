@@ -455,7 +455,7 @@
             let isWon = false;              // 是否已胜利
             let onCnt = 0;                  // 亮灯数量
 
-            // 初始化棋盘状态（全灭，清空历史）
+            // 初始化棋盘状态（全亮，清空历史）
             function initBoard(size) {
                 gridSize = size;
                 boardState = Array.from({ length: size }, () => Array(size).fill(true));
