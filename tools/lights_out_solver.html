@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>点灯游戏 - 红宝石#</title>
+    <title>点灯游戏破解器 - 红宝石#</title>
     <link rel="icon" type="image/png" href="../assets/texture/icon.png">
     <link rel="stylesheet" href="../css/style.css">
     <style>
@@ -190,12 +190,12 @@
             width: 100%;
         }
         .game-btn {
-            padding: 0.6rem 1.4rem;
+            padding: 0.4rem 1rem;
             border-radius: 50px;
             border: 1.5px solid var(--gray-200);
             cursor: pointer;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             letter-spacing: 0.03em;
             transition: var(--transition);
             white-space: nowrap;
@@ -259,7 +259,7 @@
     <main>
         <div class="game-wrapper container">
             <div class="game-card" id="gameCard">
-                <h2>点灯游戏破解</h2>
+                <h2>点灯游戏破解器</h2>
 
                 <!-- 棋盘尺寸切换按钮 -->
                 <div class="size-selector" id="sizeSelector">
@@ -267,6 +267,14 @@
                     <button class="size-btn" data-size="6">6x6</button>
                     <button class="size-btn" data-size="8">8x8</button>
                     <button class="size-btn" data-size="10">10x10</button>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="btn-row">
+                    <button class="game-btn btn-new-game" id="btnNewGame">↻ 重置</button>
+                    <button class="game-btn" id="btnImportDrawer">📥 导入游戏</button>
+                    <button class="game-btn" id="btnExportDrawer">📤 导出状态</button>
+                    <input type="file" id="importFileDrawer" accept=".json" hidden>
                 </div>
 
                 <div class="main">
@@ -277,13 +285,6 @@
                     <div class="board-container">
                         <div class="board size-6" id="buttons"></div>
                     </div>
-                </div>
-
-                <!-- 操作按钮 -->
-                <div class="btn-row">
-                    <button class="game-btn btn-new-game" id="btnNewGame">↻ 重置</button>
-                    <button class="game-btn" id="btnImportDrawer">📥 导入游戏</button>
-                    <input type="file" id="importFileDrawer" accept=".json" hidden>
                 </div>
             </div>
         </div>
@@ -297,6 +298,7 @@
             const btnNewGame = document.getElementById('btnNewGame');
             const sizeSelector = document.getElementById('sizeSelector');
             const btnImportDrawer = document.getElementById('btnImportDrawer');
+            const btnExportDrawer = document.getElementById('btnExportDrawer');
             const importFileDrawer = document.getElementById('importFileDrawer');
 
             // ---------- 游戏状态 ----------
@@ -449,9 +451,7 @@
 
             start();
 
-            // ---------- 导入 ----------
-
-            // 导入
+            // ---------- 导入导出 ----------
             function importGame(file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -484,6 +484,24 @@
                 };
                 reader.readAsText(file);
             }
+            function exportState() {
+                const saveData = {
+                    gridSize: gridSize,
+                    boardState: boardState,
+                    moveHistory: 0,
+                    isWon: false
+                };
+                const jsonStr = JSON.stringify(saveData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `light-game-${gridSize}x${gridSize}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
 
             // 导入功能
             btnImportDrawer.addEventListener('click', () => {
@@ -494,6 +512,11 @@
                     importGame(e.target.files[0]);
                     importFileDrawer.value = '';
                 }
+            });
+
+            // 导出功能
+            btnExportDrawer.addEventListener('click', () => {
+                exportState();
             });
         })();
     </script>
