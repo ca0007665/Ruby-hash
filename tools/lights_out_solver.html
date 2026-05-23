@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点灯游戏 - 红宝石#</title>
+    <link rel="icon" type="image/png" href="../assets/texture/icon.png">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body {
+            background-color: var(--gray-100);
+        }
+        main {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            padding-top: 64px;
+            min-height: 100vh;
+        }
+
+        .game-wrapper {
+            width: fit-content;
+        }
+        .game-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 2rem 2.5rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.4rem;
+            transition: box-shadow var(--transition), background-color var(--transition);
+        }
+
+        /* 尺寸选择按钮 */
+        .size-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .size-btn {
+            font-family: monospace, sans-serif;
+            padding: 0.45rem 1rem;
+            border-radius: 50px;
+            border: 1.5px solid var(--gray-200);
+            background: var(--white);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .size-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--gray-50);
+        }
+        .size-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+        .size-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 主容器 */
+        .main {
+            width: 100%;
+            text-align: center;
+        }
+        .main > *:not(:last-child) {
+            margin-bottom: 10px;
+        }
+
+        /* 棋盘容器 */
+        .board-container {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 1;
+        }
+        .board {
+            display: grid;
+            gap: 3px;
+            width: 100%;
+            height: 100%;
+            padding: 6px;
+            background: var(--gray-900);
+            border-radius: var(--radius);
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        /* 不同尺寸的棋盘模板 */
+        .board.size-3 {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            padding: 10px;
+        }
+        .board.size-6 {
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 3px;
+            padding: 7px;
+        }
+        .board.size-8 {
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            padding: 7px;
+        }
+        .board.size-10 {
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            padding: 4px;
+        }
+
+        /* 单个格子 */
+        .cell {
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color var(--transition), transform 0.1s ease;
+            border: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            aspect-ratio: 1;
+            background: var(--gray-600);
+        }
+        .cell:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            z-index: 2;
+        }
+        /* 灭灯状态 */
+        .cell.off {
+            background: var(--gray-600);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        .cell.off:hover {
+            background: #6b7280;
+        }
+        .cell.off:active {
+            transform: scale(0.92);
+        }
+        /* 亮灯状态 */
+        .cell.on {
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(204, 51, 51, 0.5);
+        }
+        .cell.on:hover {
+            background: var(--primary-dark);
+        }
+        .cell.on:active {
+            transform: scale(0.92);
+        }
+
+        /* 单个按钮 */
+        .button {
+            border-radius: 50%;
+            transition: background-color var(--transition), transform 0.1s ease;
+            border: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            aspect-ratio: 1;
+            background: var(--gray-600);
+        }
+        /* 关按钮状态 */
+        .button.off {
+            background: var(--gray-600);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        /* 开按钮状态 */
+        .button.on {
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(204, 51, 51, 0.5);
+        }
+
+        /* 底部按钮行 */
+        .btn-row {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        .game-btn {
+            padding: 0.6rem 1.4rem;
+            border-radius: 50px;
+            border: 1.5px solid var(--gray-200);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.03em;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--white);
+            color: var(--gray-900);
+        }
+        .game-btn:hover:not(:disabled) {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+        .game-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        .btn-new-game {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+        .btn-new-game:hover:not(:disabled) {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        .btn-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        @media (max-width: 432px) and (min-width: 358px) {
+            .size-selector > *:last-child {
+                display: none;
+            }
+        }
+        @media (max-width: 300px) {
+            .error {
+                display: flex;
+            }
+            body > :not(.error) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <p>抱歉，屏幕太小</p>
+    </div>
+    <!-- 导航栏 -->
+    <header class="header" id="header">
+        <nav class="nav container">
+            <a href="../index.html" class="logo">
+                <img src="../assets/texture/icon.png" class="icon">
+                Ruby#
+            </a>
+        </nav>
+    </header>
+
+    <!-- 游戏主体区域 -->
+    <main>
+        <div class="game-wrapper container">
+            <div class="game-card" id="gameCard">
+                <h2>点灯游戏破解</h2>
+
+                <!-- 棋盘尺寸切换按钮 -->
+                <div class="size-selector" id="sizeSelector">
+                    <button class="size-btn active" data-size="3">3x3</button>
+                    <button class="size-btn" data-size="6">6x6</button>
+                    <button class="size-btn" data-size="8">8x8</button>
+                    <button class="size-btn" data-size="10">10x10</button>
+                </div>
+
+                <div class="main">
+                    <!-- 棋盘容器 -->
+                    <div class="board-container">
+                        <div class="board size-6" id="board"></div>
+                    </div>
+                    <div class="board-container">
+                        <div class="board size-6" id="buttons"></div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="btn-row">
+                    <button class="game-btn btn-new-game" id="btnNewGame">↻ 重置</button>
+                    <button class="game-btn" id="btnImportDrawer">📥 导入游戏</button>
+                    <input type="file" id="importFileDrawer" accept=".json" hidden>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            // ---------- DOM 元素 ----------
+            const boardEl = document.getElementById('board');
+            const buttonEl = document.getElementById('buttons');
+            const btnNewGame = document.getElementById('btnNewGame');
+            const sizeSelector = document.getElementById('sizeSelector');
+            const btnImportDrawer = document.getElementById('btnImportDrawer');
+            const importFileDrawer = document.getElementById('importFileDrawer');
+
+            // ---------- 游戏状态 ----------
+            let gridSize = 3;               // 当前棋盘尺寸
+            let boardState = [];            // 二维布尔数组，true=亮，false=灭
+            let buttonState = [];
+
+            // 安全读取
+            const get = (mat, i, j) => (i >= 0 && i < gridSize && j >= 0 && j < gridSize) ? mat[i][j] : 0;
+
+            // 计算按钮状态
+            function computeButton() {
+                const n = gridSize;
+                const tot = 1 << n;
+                for (let i = 0; i < tot; i++) {
+                    for (let j = 0; j < n; j++) {
+                        buttonState[0][j] = (i >> (n - 1 - j)) & 1;
+                    }
+                    for (let j = 1; j < n; j++) {
+                        for (let k = 0; k < n; k++) {
+                            buttonState[j][k] = (
+                                !get(boardState, j - 1, k)
+                                ^ get(buttonState, j - 1, k)
+                                ^ get(buttonState, j - 1, k - 1)
+                                ^ get(buttonState, j - 1, k + 1)
+                                ^ get(buttonState, j - 2, k)
+                            );
+                        }
+                    }
+                    let flag = true;
+                    for (let j = 0; j < n; j++) {
+                        if ((
+                            !get(boardState, n - 1, j)
+                            ^ get(buttonState, n - 1, j)
+                            ^ get(buttonState, n - 1, j - 1)
+                            ^ get(buttonState, n - 1, j + 1)
+                            ^ get(buttonState, n - 2, j)
+                        )){
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag) break;
+                }
+            }
+
+            // 初始化棋盘状态（全亮）
+            function initBoard(size) {
+                gridSize = size;
+                boardState = Array.from({ length: size }, () => Array(size).fill(true));
+                buttonState = Array.from({ length: size }, () => Array(size));
+                computeButton();
+            }
+
+            // 翻转单个格子（边界检查）
+            function flipCell(row, col) {
+                boardState[row][col] = !boardState[row][col];
+                computeButton();
+            }
+
+            // 根据 boardState 重新渲染整个棋盘
+            function renderBoard() {
+                boardEl.className = 'board size-' + gridSize;
+                boardEl.innerHTML = '';
+                for (let r = 0; r < gridSize; r++) {
+                    for (let c = 0; c < gridSize; c++) {
+                        const cell = document.createElement('button');
+                        cell.className = 'cell ' + (boardState[r][c] ? 'on' : 'off');
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        cell.addEventListener('click', () => handleCellClick(r, c, cell));
+                        cell.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            handleCellClick(r, c, cell);
+                        }, { passive: false });
+                        boardEl.appendChild(cell);
+                    }
+                }
+            }
+
+            // 仅更新单个格子的视觉样式（优化性能）
+            function updateCellVisual(row, col) {
+                const index = row * gridSize + col;
+                const cell = boardEl.children[index];
+                if (cell) {
+                    cell.className = 'cell ' + (boardState[row][col] ? 'on' : 'off');
+                }
+            }
+
+            // 重新渲染按钮
+            function renderButton() {
+                buttonEl.className = 'board size-' + gridSize;
+                buttonEl.innerHTML = '';
+                for (let r = 0; r < gridSize; r++) {
+                    for (let c = 0; c < gridSize; c++) {
+                        const button = document.createElement('button');
+                        button.className = 'button ' + (buttonState[r][c] ? 'on' : 'off');
+                        button.dataset.row = r;
+                        button.dataset.col = c;
+                        buttonEl.appendChild(button);
+                    }
+                }
+            }
+
+            // 处理格子点击
+            function handleCellClick(row, col) {
+                flipCell(row, col);
+                updateCellVisual(row, col);
+                renderButton();
+            }
+
+            // 重置
+            function reset() {
+                initBoard(gridSize);
+                renderBoard();
+                renderButton();
+            }
+
+            // 切换棋盘尺寸
+            function changeSize(newSize) {
+                if (newSize === gridSize) return;
+                initBoard(newSize);
+                renderBoard();
+                renderButton();
+                // 更新尺寸按钮激活状态
+                document.querySelectorAll('.size-btn').forEach(b => {
+                    b.classList.toggle('active', parseInt(b.dataset.size) === gridSize);
+                });
+            }
+
+            // ---------- 事件绑定 ----------
+            btnNewGame.addEventListener('click', reset);
+
+            sizeSelector.addEventListener('click', (e) => {
+                const btn = e.target.closest('.size-btn');
+                if (!btn) return;
+                const size = parseInt(btn.dataset.size);
+                changeSize(size);
+            });
+
+            // 启动
+            function start() {
+                initBoard(gridSize);
+                renderBoard();
+                renderButton();
+                document.querySelectorAll('.size-btn').forEach(b => {
+                    b.classList.toggle('active', parseInt(b.dataset.size) === gridSize);
+                });
+            }
+
+            start();
+
+            // ---------- 导入 ----------
+
+            // 导入
+            function importGame(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        // 数据校验
+                        if (!data || typeof data.gridSize !== 'number' || !Array.isArray(data.boardState)) {
+                            throw new Error('数据格式不正确');
+                        }
+                        if (data.boardState.length !== data.gridSize ||
+                            !data.boardState.every(row => Array.isArray(row) && row.length === data.gridSize)) {
+                            throw new Error('棋盘数据与尺寸不匹配');
+                        }
+
+                        // 恢复游戏状态
+                        gridSize = data.gridSize;
+                        boardState = data.boardState;
+                        buttonState = Array.from({ length: gridSize }, () => Array(gridSize));
+
+                        // 更新 UI
+                        document.querySelectorAll('.size-btn').forEach(b => {
+                            b.classList.toggle('active', parseInt(b.dataset.size) === gridSize);
+                        });
+                        computeButton();
+                        renderBoard();
+                        renderButton();
+                    } catch (error) {
+                        alert('导入失败：' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // 导入功能
+            btnImportDrawer.addEventListener('click', () => {
+                importFileDrawer.click();
+            });
+            importFileDrawer.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importGame(e.target.files[0]);
+                    importFileDrawer.value = '';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
