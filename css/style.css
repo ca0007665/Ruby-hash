@@ -32,7 +32,7 @@ body {
 }
 
 .error {
-    height: 100vh;
+    height: 100dvh;
     display: none;
     align-items: center;
     justify-content: center;
@@ -129,7 +129,7 @@ ul {
 
 /* 英雄区 */
 .hero {
-    height: 100vh;
+    height: 100dvh;
     display: flex;
     align-items: center;
     text-align: center;
@@ -191,7 +191,7 @@ ul {
         top: 64px;
         right: -100%;
         width: 220px;
-        height: calc(100vh - 64px);
+        height: calc(100dvh - 64px);
         flex-direction: column;
         background: white;
         padding: 2rem;
